@@ -15,8 +15,7 @@ This project demonstrates how modern AI systems combine **vector search + LLMs +
 
 A short demo of the Medical RAG system processing medical PDFs and answering user queries using retrieval-augmented generation.
 
-<video src="medical_rag.mp4" controls width="800"></video>
-
+medical_rag.mp4
 ---
 
 # Key Features
