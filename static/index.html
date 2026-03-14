@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Medical RAG UI</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#fff; --muted:#6b7280; --text:#111827;
+      --border:#e5e7eb; --shadow:0 6px 20px rgba(17,24,39,.06);
+      --radius:18px; --btn:#111827; --btnText:#fff; --pill:#f3f4f6;
+      --user:#111827; --userText:#fff; --assist:#f3f4f6; --assistText:#111827;
+      --ring:rgba(17,24,39,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.85);
+      backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:1150px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px;min-width:260px}
+    .logo{width:38px;height:38px;border-radius:16px;background:#111827}
+    .title{font-size:14px;font-weight:700;line-height:1.1}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+    .toggles{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .toggleBtn{border:1px solid var(--border);background:#f3f4f6;color:#111827;padding:10px 12px;border-radius:14px;
+      font-weight:700;font-size:13px;cursor:pointer}
+    .toggleBtn.active{background:var(--btn);color:var(--btnText);border-color:var(--btn)}
+    main{max-width:1150px;margin:0 auto;padding:14px 16px 22px;display:grid;grid-template-columns:2fr 1fr;gap:14px}
+    @media(max-width:980px){main{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .cardHead{padding:14px 16px;border-bottom:1px solid var(--border)}
+    .cardHead .h{font-weight:800;font-size:14px;margin:0}
+    .cardHead .p{margin:3px 0 0;font-size:12px;color:var(--muted)}
+    .chatBody{height:60vh;overflow:auto;padding:14px;background:#fff}
+    .bubbleWrap{display:flex;flex-direction:column;gap:10px}
+    .bubble{max-width:92%;padding:12px 14px;border-radius:18px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+    .bubble.user{margin-left:auto;background:var(--user);color:var(--userText)}
+    .bubble.assistant{background:var(--assist);color:var(--assistText)}
+    .inputBar{border-top:1px solid var(--border);padding:12px;background:#fff}
+    .row{display:flex;gap:10px;align-items:flex-end}
+    textarea,input{width:100%;border:1px solid var(--border);border-radius:14px;padding:10px 12px;font-size:14px;outline:none}
+    textarea:focus,input:focus{box-shadow:0 0 0 4px var(--ring);border-color:#cbd5e1}
+    textarea{resize:none;min-height:44px;max-height:160px;overflow:auto}
+    .btn{border:0;border-radius:14px;padding:11px 14px;font-weight:800;font-size:13px;background:var(--btn);color:var(--btnText);cursor:pointer;white-space:nowrap}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
+    .examBody{padding:14px 16px;display:none}
+    .label{font-size:12px;font-weight:800;color:#374151;margin-bottom:6px;display:block}
+    .optRow{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .optLabel{width:54px;text-align:center;font-weight:800;background:#f9fafb;border:1px solid var(--border);border-radius:14px;padding:10px 0}
+    .optRemove{border:1px solid var(--border);background:#f3f4f6;border-radius:14px;padding:9px 10px;cursor:pointer;font-weight:800;font-size:12px}
+    .optRemove:disabled{opacity:.5;cursor:not-allowed}
+    .optTop{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+    .btnLight{border:1px solid var(--border);background:#f3f4f6;color:#111827;border-radius:14px;padding:10px 12px;font-weight:800;font-size:12px;cursor:pointer}
+    .resultBox{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:var(--pill);
+      font-size:12px;font-weight:800;color:#374151}
+    .optCard{border:1px solid var(--border);border-radius:16px;padding:12px;margin-top:10px;background:#fff}
+    .optCardTop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .optCardTop .left{font-weight:900;font-size:13px}
+    .optCardTop .right{font-size:12px;color:var(--muted);font-weight:800}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{background:#f3f4f6;border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800;color:#374151}
+    .sourcesBody{max-height:75vh;overflow:auto;padding:14px 14px 16px;background:#fff}
+    .empty{font-size:14px;color:var(--muted)}
+    .blockTitle{font-size:12px;font-weight:900;color:#374151;margin:12px 0 8px}
+    .srcCard{border:1px solid var(--border);border-radius:16px;padding:12px;margin-top:10px;background:#fff}
+    .srcTag{font-weight:900;font-size:13px}
+    .small{font-size:12px;color:var(--muted);margin-top:6px;word-break:break-word}
+    .excerpt{margin-top:8px;font-size:12px;line-height:1.45;color:#111827}
+    .model-select-group {
+      display: flex;
+      background: #ebecef;
+      padding: 4px;
+      border-radius: 12px;
+      gap: 4px;
+      margin-right: 12px;
+      width: fit-content;
+      margin-top: 10px;
+    }
+    .model-label {
+      font-size: 11px;
+      font-weight: 800;
+      align-self: center;
+      padding: 0 8px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .mini-toggle {
+      border: none;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .mini-toggle.active {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      color: var(--btn);
+    }
+    .sourcesCode {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fafafa;
+      margin-top: 8px;
+    }
+    .controlsRow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    padding: 10px 12px 0;
+    background:#fff;
+    border-top:1px solid var(--border);
+  }
+  .controlsLeft{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .controlsRow .model-select-group{
+    margin-top:0; /* override existing */
+    margin-right:0;
+  }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <div class="title">Medical RAG</div>
+        <div class="subtitle">Chat + Sources + Exam (MCQ)</div>
+      </div>
+    </div>
+    <div class="toggles">
+      <button id="chatToggle" class="toggleBtn active">Chat</button>
+      <button id="examToggle" class="toggleBtn">Exam (MCQ)</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Left -->
+  <section class="card">
+    <div class="cardHead">
+      <p class="h" id="mainTitle">Chat</p>
+      <p class="p" id="mainSubtitle">Answers are grounded in your lecture sources.</p>
+    </div>
+
+    <!-- Chat -->
+    <div id="chatView">
+      <div class="chatBody" id="chatBody">
+        <div class="bubbleWrap" id="bubbleWrap">
+          <div class="bubble assistant">Hi! Ask a medical question and I’ll answer from your lecture sources.</div>
+        </div>
+      </div>
+
+      <!-- Source mode controls (Chat) -->
+      <div class="controlsRow" aria-label="Chat controls">
+        <div class="controlsLeft">
+          <!-- Source mode controls (Chat) -->
+          <div class="model-select-group" aria-label="Chat source mode">
+            <label class="model-label">Source:</label>
+            <button id="modeLectures" class="mini-toggle active" type="button">Lectures</button>
+            <button id="modeWeb" class="mini-toggle" type="button">Web</button>
+          </div>
+
+          <!-- NEW: Reasoning depth controls (Chat) -->
+          <div class="model-select-group" aria-label="Chat reasoning depth">
+            <label class="model-label">Depth:</label>
+            <button id="depthFast" class="mini-toggle" type="button">Fast</button>
+            <button id="depthBalanced" class="mini-toggle active" type="button">Balanced</button>
+            <button id="depthDeep" class="mini-toggle" type="button">Deep</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="inputBar">
+        <div class="row">
+          <textarea id="chatInput" placeholder="Ask a question…"></textarea>
+          <button class="btn" id="sendBtn">Send</button>
+        </div>
+        <div class="hint">Press Enter to send • Shift+Enter for new line</div>
+      </div>
+    </div>
+
+    <!-- Exam -->
+    <div class="examBody" id="examView">
+      <label class="label">Stem</label>
+      <textarea id="stemInput" style="min-height:90px; resize:vertical;" placeholder="Paste the MCQ stem…"></textarea>
+
+      <div class="optTop">
+        <div class="label" style="margin:0;">Options</div>
+        <button class="btnLight" id="addOptionBtn">+ Add option</button>
+      </div>
+
+      <div id="optionsWrap"></div>
+
+      <!-- Source mode controls (Exam) -->
+      <div class="controlsRow" aria-label="Exam controls">
+        <div class="controlsLeft">
+          <!-- Source mode controls (Exam) -->
+          <div class="model-select-group" aria-label="Exam source mode">
+            <label class="model-label">Source:</label>
+            <button id="examModeLectures" class="mini-toggle active" type="button">Lectures</button>
+            <button id="examModeWeb" class="mini-toggle" type="button">Web</button>
+          </div>
+
+          <!-- NEW: Reasoning depth controls (Exam) -->
+          <div class="model-select-group" aria-label="Exam reasoning depth">
+            <label class="model-label">Depth:</label>
+            <button id="examDepthFast" class="mini-toggle" type="button">Fast</button>
+            <button id="examDepthBalanced" class="mini-toggle active" type="button">Balanced</button>
+            <button id="examDepthDeep" class="mini-toggle" type="button">Deep</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" id="evaluateBtn">Evaluate</button>
+        <button class="btnLight" id="clearExamBtn">Clear</button>
+      </div>
+
+      <div class="resultBox">
+        <div class="label">Result</div>
+        <div class="empty" id="examEmpty">Submit an MCQ to see evaluated options.</div>
+        <div id="examResult"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right: Sources -->
+  <aside class="card">
+    <div class="cardHead">
+      <p class="h">Sources</p>
+      <p class="p" id="sourcesSubtitle">Citations + retrieved pages used for grounding.</p>
+    </div>
+
+    <div class="sourcesBody">
+      <div id="sourcesContent" style="margin-top:14px;">
+        <div class="empty">No sources yet. Ask a question (or run an MCQ) to populate this panel.</div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script>
+  const API_BASE = "http://localhost:8000";
+
+  // -----------------------------
+  // Elements
+  // -----------------------------
+  const chatToggle = document.getElementById("chatToggle");
+  const examToggle = document.getElementById("examToggle");
+  const chatView = document.getElementById("chatView");
+  const examView = document.getElementById("examView");
+
+  const mainTitle = document.getElementById("mainTitle");
+  const mainSubtitle = document.getElementById("mainSubtitle");
+  const sourcesSubtitle = document.getElementById("sourcesSubtitle");
+
+  const bubbleWrap = document.getElementById("bubbleWrap");
+  const chatBody = document.getElementById("chatBody");
+  const chatInput = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  const stemInput = document.getElementById("stemInput");
+  const optionsWrap = document.getElementById("optionsWrap");
+  const addOptionBtn = document.getElementById("addOptionBtn");
+  const evaluateBtn = document.getElementById("evaluateBtn");
+  const clearExamBtn = document.getElementById("clearExamBtn");
+
+  const examEmpty = document.getElementById("examEmpty");
+  const examResult = document.getElementById("examResult");
+
+  const sourcesContent = document.getElementById("sourcesContent");
+
+  // -----------------------------
+  // State
+  // -----------------------------
+  let mode = "chat"; // chat | exam
+  let loading = false;
+
+  let lastQA = null;     // /qa response
+  let lastExam = null;   // /exam_mcq response
+
+  // Must match Python Enum values exactly:
+  let currentSourceMode = "lectures"; // lectures | web
+  let currentDepth = "balanced";      // fast | balanced | deep
+
+  // -----------------------------
+  // Depth toggle elements (Chat)
+  // -----------------------------
+  const depthFast = document.getElementById("depthFast");
+  const depthBalanced = document.getElementById("depthBalanced");
+  const depthDeep = document.getElementById("depthDeep");
+
+  // -----------------------------
+  // Depth toggle elements (Exam)
+  // -----------------------------
+  const examDepthFast = document.getElementById("examDepthFast");
+  const examDepthBalanced = document.getElementById("examDepthBalanced");
+  const examDepthDeep = document.getElementById("examDepthDeep");
+
+  function setDepth(next){
+    currentDepth = next;
+
+    // Chat depth buttons
+    if (depthFast && depthBalanced && depthDeep) {
+      depthFast.classList.toggle("active", next === "fast");
+      depthBalanced.classList.toggle("active", next === "balanced");
+      depthDeep.classList.toggle("active", next === "deep");
+    }
+
+    // Exam depth buttons
+    if (examDepthFast && examDepthBalanced && examDepthDeep) {
+      examDepthFast.classList.toggle("active", next === "fast");
+      examDepthBalanced.classList.toggle("active", next === "balanced");
+      examDepthDeep.classList.toggle("active", next === "deep");
+    }
+  }
+
+  // Wire up depth toggles
+  if (depthFast) depthFast.onclick = () => setDepth("fast");
+  if (depthBalanced) depthBalanced.onclick = () => setDepth("balanced");
+  if (depthDeep) depthDeep.onclick = () => setDepth("deep");
+
+  if (examDepthFast) examDepthFast.onclick = () => setDepth("fast");
+  if (examDepthBalanced) examDepthBalanced.onclick = () => setDepth("balanced");
+  if (examDepthDeep) examDepthDeep.onclick = () => setDepth("deep");
+
+  // Default
+  setDepth("balanced");
+
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  function escapeHtml(str){
+    return (str ?? "").replace(/[&<>"']/g, (m) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    })[m]);
+  }
+
+  function prettyPdfName(c) {
+    if (!c) return "Source";
+    if (c.pdf_name) return c.pdf_name;
+    if (c.source_pdf) {
+      const parts = c.source_pdf.split("/");
+      return parts[parts.length - 1] || "Source";
+    }
+    return "Source";
+  }
+
+  // Extract SOURCES section from answer (if present)
+  function splitAnswerSources(answerText) {
+    const text = answerText || "";
+    const idx = text.toLowerCase().lastIndexOf("\nsources:");
+    if (idx === -1) return { body: text, sources: "" };
+    return {
+      body: text.slice(0, idx).trim(),
+      sources: text.slice(idx).trim()
+    };
+  }
+
+  async function postJson(path, body) {
+    const url = API_BASE + path;
+    const headers = { "Content-Type": "application/json" };
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(t || ("HTTP " + res.status));
+    }
+    return res.json();
+  }
+
+  function setLoading(isLoading) {
+    loading = isLoading;
+    sendBtn.disabled = isLoading;
+    evaluateBtn.disabled = isLoading;
+    chatInput.disabled = isLoading;
+    stemInput.disabled = isLoading;
+    addOptionBtn.disabled = isLoading;
+    clearExamBtn.disabled = isLoading;
+    renderOptions();
+  }
+
+  function addBubble(role, text){
+    const div = document.createElement("div");
+    div.className = "bubble " + role;
+    div.textContent = text;
+    bubbleWrap.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function renderSourcesPanel(){
+    const inChat = (mode === "chat");
+    const sources = inChat ? (lastQA?.sources || []) : (lastExam?.sources || []);
+    const answerText = inChat ? (lastQA?.answer || "") : "";
+
+    let html = "";
+
+    // Show SOURCES section extracted from answer (chat only)
+    if (inChat && answerText) {
+      const sp = splitAnswerSources(answerText);
+      if (sp.sources) {
+        html += `<div class="blockTitle">Answer SOURCES</div>`;
+        html += `<div class="sourcesCode">${escapeHtml(sp.sources)}</div>`;
+      }
+    }
+
+    // Citations (chat only)
+    if (inChat && lastQA?.citations?.length) {
+      html += `<div class="blockTitle">Citations (parsed)</div>`;
+      html += lastQA.citations.map(c => {
+        const pdf = escapeHtml(prettyPdfName(c));
+        const page = escapeHtml(String(c.page_number ?? ""));
+        return `
+          <div class="srcCard">
+            <div class="srcTag">${pdf} • p.${page}</div>
+            <div class="small">${escapeHtml(c.source_pdf || "")}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Retrieved pages
+    if (sources && sources.length) {
+      html += `<div class="blockTitle">Retrieved pages</div>`;
+      html += sources.map(s => {
+        const doc = escapeHtml(s.doc_id || "");
+        const pageNum = s.page_number ?? "";
+        const tag = `[${doc}:p${String(pageNum).padStart(4,"0")}]`;
+        const pdf = escapeHtml((s.source_pdf || "").split("/").pop() || "(unknown)");
+        const excerpt = escapeHtml(s.text_excerpt || "");
+        return `
+          <div class="srcCard">
+            <div class="srcTag">${tag}</div>
+            <div class="small"><b>PDF:</b> ${pdf}</div>
+            ${excerpt ? `<div class="excerpt">${excerpt}</div>` : ``}
+            <div class="small"><b>image_path:</b> ${escapeHtml(s.image_path || "")}</div>
+            <div class="small"><b>text_path:</b> ${escapeHtml(s.text_path || "")}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    if (!html) {
+      sourcesContent.innerHTML = `<div class="empty">No sources yet. Ask a question (or run an MCQ) to populate this panel.</div>`;
+      return;
+    }
+
+    sourcesContent.innerHTML = html;
+  }
+
+  function switchMode(nextMode){
+    mode = nextMode;
+    lastQA = null;
+    lastExam = null;
+    renderSourcesPanel();
+
+    if (mode === "chat") {
+      chatToggle.classList.add("active");
+      examToggle.classList.remove("active");
+      chatView.style.display = "block";
+      examView.style.display = "none";
+      mainTitle.textContent = "Chat";
+      mainSubtitle.textContent = subtitleForSource(currentSourceMode, "chat");
+      sourcesSubtitle.textContent = "Citations + retrieved pages used for grounding.";
+    } else {
+      examToggle.classList.add("active");
+      chatToggle.classList.remove("active");
+      chatView.style.display = "none";
+      examView.style.display = "block";
+      mainTitle.textContent = "Exam mode";
+      mainSubtitle.textContent = subtitleForSource(currentSourceMode, "exam");
+      sourcesSubtitle.textContent = "Retrieved pages used to evaluate options.";
+    }
+  }
+
+  chatToggle.addEventListener("click", () => switchMode("chat"));
+  examToggle.addEventListener("click", () => switchMode("exam"));
+
+  function subtitleForSource(sourceMode, viewMode){
+    if (viewMode === "chat") {
+      if (sourceMode === "web") return "Answers are grounded in approved web sources (allowlist).";
+      return "Answers are grounded strictly in your lecture sources.";
+    } else {
+      if (sourceMode === "web") return "Evaluating options using approved web sources (allowlist).";
+      return "Evaluating options using your lecture sources.";
+    }
+  }
+
+  // Toggle buttons mapping
+  const chatLectures = document.getElementById("modeLectures");
+  const chatWeb = document.getElementById("modeWeb");
+
+  const examLectures = document.getElementById("examModeLectures");
+  const examWeb = document.getElementById("examModeWeb");
+
+  function setSource(next){
+    currentSourceMode = next;
+
+    // Update chat group
+    chatLectures.classList.toggle("active", next === "lectures");
+    chatWeb.classList.toggle("active", next === "web");
+
+    // Update exam group
+    examLectures.classList.toggle("active", next === "lectures");
+    examWeb.classList.toggle("active", next === "web");
+
+    // Update subtitle
+    mainSubtitle.textContent = subtitleForSource(next, mode);
+  }
+
+  chatLectures.onclick = () => setSource("lectures");
+  chatWeb.onclick = () => setSource("web");
+  examLectures.onclick = () => setSource("lectures");
+  examWeb.onclick = () => setSource("web");
+
+  // --------------------------------
+  // Chat submit
+  // --------------------------------
+  async function submitChat() {
+    const q = chatInput.value.trim();
+    if (!q || loading) return;
+
+    addBubble("user", q);
+    chatInput.value = "";
+
+    setLoading(true);
+    addBubble("assistant", "Thinking…");
+
+    const payload = {
+      question: q,
+      mode: currentSourceMode,
+      reasoning_depth: currentDepth   // ✅ NEW
+      // NOTE: remove top_k/max_sources overrides so backend preset mapping is used
+    };
+
+    try {
+      const data = await postJson("/qa", payload);
+      lastQA = data;
+
+      const sp = splitAnswerSources(data.answer || "");
+      bubbleWrap.lastElementChild.textContent = sp.body || "(No answer returned.)";
+
+      renderSourcesPanel();
+    } catch (e) {
+      bubbleWrap.lastElementChild.textContent = "Error: " + e.message;
+      renderSourcesPanel();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  sendBtn.addEventListener("click", submitChat);
+
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitChat();
+    }
+  });
+
+  // --------------------------------
+  // Exam options handling
+  // --------------------------------
+  let options = [
+    { label: "A", text: "" },
+    { label: "B", text: "" },
+    { label: "C", text: "" },
+    { label: "D", text: "" },
+    { label: "E", text: "" }
+  ];
+
+  function nextLabel(){ return String.fromCharCode(65 + options.length); }
+
+  function renderOptions(){
+    optionsWrap.innerHTML = "";
+    options.forEach((opt, idx) => {
+      const row = document.createElement("div");
+      row.className = "optRow";
+
+      const lab = document.createElement("div");
+      lab.className = "optLabel";
+      lab.textContent = opt.label;
+
+      const input = document.createElement("input");
+      input.placeholder = "Option " + opt.label + "…";
+      input.value = opt.text;
+      input.disabled = loading;
+      input.addEventListener("input", (e) => { options[idx].text = e.target.value; });
+
+      const remove = document.createElement("button");
+      remove.className = "optRemove";
+      remove.textContent = "✕";
+      remove.disabled = loading || options.length <= 2;
+      remove.addEventListener("click", () => {
+        options = options.filter((_, i) => i !== idx);
+        renderOptions();
+      });
+
+      row.appendChild(lab);
+      row.appendChild(input);
+      row.appendChild(remove);
+      optionsWrap.appendChild(row);
+    });
+  }
+
+  addOptionBtn.addEventListener("click", () => {
+    if (loading || options.length >= 10) return;
+    options.push({ label: nextLabel(), text: "" });
+    renderOptions();
+  });
+
+  clearExamBtn.addEventListener("click", () => {
+    if (loading) return;
+    stemInput.value = "";
+    options = [
+      { label: "A", text: "" },
+      { label: "B", text: "" },
+      { label: "C", text: "" },
+      { label: "D", text: "" },
+      { label: "E", text: "" }
+    ];
+    lastExam = null;
+    examResult.innerHTML = "";
+    examEmpty.style.display = "block";
+    renderOptions();
+    renderSourcesPanel();
+  });
+
+  function renderExamResult(){
+    if (!lastExam) return;
+
+    if (lastExam.error) {
+      examResult.innerHTML = '<div class="empty">Error: ' + escapeHtml(lastExam.error) + '</div>';
+      return;
+    }
+
+    const overall = escapeHtml(lastExam.overall || "—");
+    const finalAnswer = (lastExam.final_answer || []).join(", ") || "—";
+    const conf = (typeof lastExam.final_confidence === "number")
+      ? lastExam.final_confidence.toFixed(2)
+      : "0.00";
+
+    let html = `
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <span class="pill">Overall: ${overall}</span>
+        <span class="pill">Answer: ${escapeHtml(finalAnswer)}</span>
+        <span class="pill">Confidence: ${escapeHtml(conf)}</span>
+      </div>
+    `;
+
+    (lastExam.options || []).forEach(o => {
+      const label = escapeHtml(o.label || "");
+      const status = escapeHtml(o.status || "");
+      const oconf = (typeof o.confidence === "number") ? o.confidence.toFixed(2) : "0.00";
+      const rationale = escapeHtml(o.rationale || "");
+      const cites = o.citations || [];
+
+      html += `
+        <div class="optCard">
+          <div class="optCardTop">
+            <div class="left">${label} — ${status}</div>
+            <div class="right">conf ${escapeHtml(oconf)}</div>
+          </div>
+          <div style="margin-top:8px; font-size:14px; line-height:1.5;">${rationale}</div>
+      `;
+
+      if (cites.length > 0) {
+        html += `<div class="chips">` + cites.map(c => `<span class="chip">${escapeHtml(c)}</span>`).join("") + `</div>`;
+      }
+
+      html += `</div>`;
+    });
+
+    examResult.innerHTML = html;
+  }
+
+  async function submitExam(){
+    const stem = stemInput.value.trim();
+    const cleanedOpts = options
+      .map(o => ({ label: o.label.trim(), text: (o.text || "").trim() }))
+      .filter(o => o.label && o.text);
+
+    if (!stem || cleanedOpts.length < 2 || loading) return;
+
+    setLoading(true);
+    lastExam = null;
+    examEmpty.style.display = "none";
+    examResult.innerHTML = '<div class="empty">Evaluating…</div>';
+
+    const payload = {
+      stem,
+      options: cleanedOpts,
+      mode: currentSourceMode,
+      reasoning_depth: currentDepth  // ✅ NEW
+      // remove top_k/max_sources overrides unless you want to force legacy behavior
+    };
+
+    try {
+      const data = await postJson("/exam_mcq", payload);
+      lastExam = data;
+      renderExamResult();
+      renderSourcesPanel();
+    } catch (e) {
+      lastExam = { error: e.message };
+      examResult.innerHTML = '<div class="empty">Error: ' + escapeHtml(e.message) + '</div>';
+      renderSourcesPanel();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  evaluateBtn.addEventListener("click", submitExam);
+
+  renderOptions();
+  renderSourcesPanel();
+  switchMode("chat");
+  setSource("lectures");
+</script>
+</body>
+</html>
